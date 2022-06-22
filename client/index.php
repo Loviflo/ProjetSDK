@@ -3,7 +3,7 @@
 function login()
 {
     $queryParams= http_build_query(array(
-        "client_id" => "621e3b8d1f964",
+        "client_id" => "418310210187577",
         "redirect_uri" => "http://localhost:8081/callback",
         "response_type" => "code",
         "scope" => "read,write",
@@ -18,7 +18,7 @@ function login()
     ";
     echo "<a href=\"http://localhost:8080/auth?{$queryParams}\">Se connecter via Oauth Server</a><br/>";
     $queryParams= http_build_query(array(
-        "client_id" => "1010755216459252",
+        "client_id" => "418310210187577",
         "redirect_uri" => "http://localhost:8081/fb_callback",
         "response_type" => "code",
         "scope" => "public_profile,email",
@@ -73,8 +73,8 @@ function fbcallback()
             "grant_type" => "authorization_code",
             "code" => $_GET["code"],
         ];
-    $clientId = "1010755216459252";
-    $clientSecret = "b0c27b63308d46ae5d236d2bd691921b";
+    $clientId = "418310210187577";
+    $clientSecret = "82fef5a7f59581e542463e68888bb9f1";
     $redirectUri = "http://localhost:8081/fb_callback";
     $data = http_build_query(array_merge([
         "redirect_uri" => $redirectUri,
