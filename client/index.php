@@ -3,7 +3,7 @@
 function login()
 {
     $queryParams= http_build_query(array(
-        "client_id" => "418310210187577",
+        "client_id" => "621e3b8d1f964",
         "redirect_uri" => "http://localhost:8081/callback",
         "response_type" => "code",
         "scope" => "read,write",
