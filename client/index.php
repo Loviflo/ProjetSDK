@@ -2,14 +2,15 @@
 
 namespace App;
 
+use App\Provider\FacebookProvider;
+use App\Provider\GithubProvider;
+use App\Provider\GoogleProvider;
+use App\Provider\OwnProvider;
+
 function myAutoloader($class)
 {
-    //var_dump($class);
-    // $class -> "Core\Security" "Model\User
     $class = str_ireplace("App\\", "", $class);
-    // $class -> "Core/Security" "Model/User
     $class = str_replace("\\", "/", $class);
-    // $class -> "Core/Security"
     if (file_exists($class . ".class.php")) {
         include $class . ".class.php";
     } elseif (file_exists($class . ".php")) {
@@ -109,160 +110,25 @@ function callback()
     echo "Hello {$result['lastname']}";
 }
 
-function fbcallback()
-{
-    $specifParams = [
-        "grant_type" => "authorization_code",
-        "code" => $_GET["code"],
-    ];
-    $clientId = "418310210187577";
-    $clientSecret = "82fef5a7f59581e542463e68888bb9f1";
-    $redirectUri = "http://localhost:8081/fb_callback";
-    $data = http_build_query(array_merge([
-        "redirect_uri" => $redirectUri,
-        "client_id" => $clientId,
-        "client_secret" => $clientSecret
-    ], $specifParams));
-    $url = "https://graph.facebook.com/v2.10/oauth/access_token?{$data}";
-    $result = file_get_contents($url);
-    $result = json_decode($result, true);
-    $accessToken = $result['access_token'];
-
-    $url = "https://graph.facebook.com/v2.10/me";
-    $options = array(
-        'http' => array(
-            'method' => 'GET',
-            'header' => 'Authorization: Bearer ' . $accessToken
-        )
-    );
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $result = json_decode($result, true);
-    echo "Hello {$result['name']}";
-}
-
-
-function googlecallback()
-{
-
-    $specifParams = [
-            "grant_type" => "authorization_code",
-            "code" => $_GET["code"],
-        ];
-    $clientId = "163659216436-lcj7h65gqut854e0oai5ktjn7bbbefk3.apps.googleusercontent.com";
-    $clientSecret = "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";
-    $redirectUri = "http://localhost:8081/google_callback";
-    $data = http_build_query(array_merge([
-        "redirect_uri" => $redirectUri,
-        "client_id" => $clientId,
-        "client_secret" => $clientSecret,
-    ], $specifParams));
-
-    $url = "https://oauth2.googleapis.com/token";
-    $options = array(
-        'http' => array(
-            'header' => [
-                "Content-Type: application/x-www-form-urlencoded",
-                "Accept: application/json"
-            ],
-            'method' => 'POST',
-            'content' => $data
-
-        )
-    );
-
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $result = json_decode($result, true);
-    $accessToken = $result['access_token'];
-    $url = "https://openidconnect.googleapis.com/v1/userinfo";
-    $options = array(
-        'http' => array(
-            'method' => 'GET',
-            'header' => [
-                'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1',
-                'Authorization: Bearer ' . $accessToken
-            ]
-        )
-    );
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-
-
-    $result = json_decode($result, true);
-    echo "Hello {$result['name']}";
-
-}
-
-function ghcallback()
-{
-    $specifParams = [
-        'grant_type' => 'authorization_code',
-        'code' => $_GET['code'],
-    ];
-    $clientId = 'e52e6e751ff54609c25e';
-    $clientSecret = '8e87980eef1886b3f983b1df153232b2fda75b2e';
-    $redirectUri = "http://localhost:8081/gh_callback";
-    $data = http_build_query(
-        array_merge(
-            [
-                "redirect_uri" => $redirectUri,
-                "client_id" => $clientId,
-                "client_secret" => $clientSecret
-            ],
-            $specifParams
-        )
-    );
-
-    $url = "https://github.com/login/oauth/access_token";
-    $options = [
-        'http' => [
-            'header' => [
-                "Content-Type: application/x-www-form-urlencoded",
-                "Accept: application/json"
-            ],
-            'method' => 'POST',
-            'content' => $data
-        ]
-    ];
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $result = json_decode($result, true);
-
-    $accessToken = $result['access_token'];
-    $url = "https://api.github.com/user";
-    $options = array(
-        'http' => array(
-            'method' => 'GET',
-            'header' => [
-                'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1',
-                'Authorization: token ' . $accessToken
-            ]
-        )
-    );
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $result = json_decode($result, true);
-    echo "Hello {$result['login']}";
-}
 $route = $_SERVER['REQUEST_URI'];
 switch (strtok($route, "?")) {
     case '/login':
         login();
         break;
     case '/callback':
-        callback();
+        (new OwnProvider())->callback();
         break;
     case '/fb_callback':
-        fbcallback();
+        (new FacebookProvider())->callback();
         break;
     case '/google_callback':
-        googlecallback();
+        (new GoogleProvider())->callback();
         break;
     case '/gh_callback':
-        ghcallback();
+        (new GithubProvider())->callback();
         break;
     default:
-        echo '404';
+        http_response_code(404);
+        echo '<h1>404</h1>';
         break;
 }
