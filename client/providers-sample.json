@@ -1,0 +1,11 @@
+{
+  "providers": {
+    "provider": {
+      "client_id": "client_id",
+      "client_secret": "client_secret",
+      "redirect_uri": "redirect_url",
+      "access_token_url": "access_token_url",
+      "user_info_url": "user_info_url"
+    }
+  }
+}
