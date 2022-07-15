@@ -2,7 +2,7 @@
 
 function login()
 {
-    $queryParams= http_build_query(array(
+    $queryParams = http_build_query(array(
         "client_id" => "621e3b8d1f964",
         "redirect_uri" => "http://localhost:8081/callback",
         "response_type" => "code",
@@ -17,14 +17,28 @@ function login()
         </form>
     ";
     echo "<a href=\"http://localhost:8080/auth?{$queryParams}\">Se connecter via Oauth Server</a><br/>";
-    $queryParams= http_build_query(array(
-        "client_id" => "418310210187577",
-        "redirect_uri" => "http://localhost:8081/fb_callback",
-        "response_type" => "code",
-        "scope" => "public_profile,email",
-        "state" => bin2hex(random_bytes(16))
-    ));
-    echo "<a href=\"https://www.facebook.com/v2.10/dialog/oauth?{$queryParams}\">Se connecter via Facebook</a>";
+
+    $queryParams = http_build_query(
+        [
+            "client_id" => "418310210187577",
+            "redirect_uri" => "http://localhost:8081/fb_callback",
+            "response_type" => "code",
+            "scope" => "public_profile,email",
+            "state" => bin2hex(random_bytes(16))
+        ]
+    );
+    echo "<a href=\"https://www.facebook.com/v2.10/dialog/oauth?{$queryParams}\">Se connecter via Facebook</a><br/>";
+
+    $queryParams = http_build_query(
+        [
+            "client_id" => "e52e6e751ff54609c25e",
+            "redirect_uri" => "http://localhost:8081/gh_callback",
+            "response_type" => "code",
+            "scope" => "read:user,user:email",
+            "state" => bin2hex(random_bytes(16))
+        ]
+    );
+    echo "<a href=\"https://github.com/login/oauth/authorize?{$queryParams}\">Se connecter via Github</a>";
 }
 
 function callback()
@@ -70,9 +84,9 @@ function callback()
 function fbcallback()
 {
     $specifParams = [
-            "grant_type" => "authorization_code",
-            "code" => $_GET["code"],
-        ];
+        "grant_type" => "authorization_code",
+        "code" => $_GET["code"],
+    ];
     $clientId = "418310210187577";
     $clientSecret = "82fef5a7f59581e542463e68888bb9f1";
     $redirectUri = "http://localhost:8081/fb_callback";
@@ -99,6 +113,58 @@ function fbcallback()
     echo "Hello {$result['name']}";
 }
 
+function ghcallback()
+{
+    $specifParams = [
+        'grant_type' => 'authorization_code',
+        'code' => $_GET['code'],
+    ];
+    $clientId = 'e52e6e751ff54609c25e';
+    $clientSecret = '8e87980eef1886b3f983b1df153232b2fda75b2e';
+    $redirectUri = "http://localhost:8081/gh_callback";
+    $data = http_build_query(
+        array_merge(
+            [
+                "redirect_uri" => $redirectUri,
+                "client_id" => $clientId,
+                "client_secret" => $clientSecret
+            ],
+            $specifParams
+        )
+    );
+
+    $url = "https://github.com/login/oauth/access_token";
+    $options = [
+        'http' => [
+            'header' => [
+                    "Content-Type: application/x-www-form-urlencoded",
+                    "Accept: application/json"
+                ],
+            'method' => 'POST',
+            'content' => $data
+        ]
+    ];
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $result = json_decode($result, true);
+    
+    $accessToken = $result['access_token'];
+    $url = "https://api.github.com/user";
+    $options = array(
+        'http' => array(
+            'method' => 'GET',
+            'header' => [
+                'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1',
+                'Authorization: token ' . $accessToken
+            ]
+        )
+    );
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $result = json_decode($result, true);
+    echo "Hello {$result['login']}";
+}
+
 $route = $_SERVER['REQUEST_URI'];
 switch (strtok($route, "?")) {
     case '/login':
@@ -109,6 +175,9 @@ switch (strtok($route, "?")) {
         break;
     case '/fb_callback':
         fbcallback();
+        break;
+    case '/gh_callback':
+        ghcallback();
         break;
     default:
         echo '404';
