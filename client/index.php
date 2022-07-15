@@ -158,7 +158,7 @@ function googlecallback()
         "client_secret" => $clientSecret,
     ], $specifParams));
 
-    $url = "https://accounts.google.com/o/oauth2/token";
+    $url = "https://oauth2.googleapis.com/token";
     $options = array(
         'http' => array(
             'header' => [
@@ -175,13 +175,13 @@ function googlecallback()
     $result = file_get_contents($url, false, $context);
     $result = json_decode($result, true);
     $accessToken = $result['access_token'];
-    $url = "https://accounts.google.com/oauth2/v4/userinfo";
+    $url = "https://openidconnect.googleapis.com/v1/userinfo";
     $options = array(
         'http' => array(
             'method' => 'GET',
             'header' => [
                 'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1',
-                'Authorization: token ' . $accessToken
+                'Authorization: Bearer ' . $accessToken
             ]
         )
     );
@@ -190,10 +190,10 @@ function googlecallback()
 
 
     $result = json_decode($result, true);
-die(var_dump($accessToken));
     echo "Hello {$result['name']}";
 
 }
+
 function ghcallback()
 {
     $specifParams = [
