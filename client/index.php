@@ -1,5 +1,26 @@
 <?php
 
+namespace App;
+
+function myAutoloader($class)
+{
+    //var_dump($class);
+    // $class -> "Core\Security" "Model\User
+    $class = str_ireplace("App\\", "", $class);
+    // $class -> "Core/Security" "Model/User
+    $class = str_replace("\\", "/", $class);
+    // $class -> "Core/Security"
+    if (file_exists($class . ".class.php")) {
+        include $class . ".class.php";
+    } elseif (file_exists($class . ".php")) {
+        include $class . ".php";
+    }
+}
+
+spl_autoload_register("App\myAutoloader");
+
+include 'Utilities/Helpers.php';
+
 function login()
 {
     $queryParams = http_build_query(array(
