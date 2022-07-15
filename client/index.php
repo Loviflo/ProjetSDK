@@ -39,17 +39,24 @@ function login()
     ";
     echo "<a href=\"http://localhost:8080/auth?{$queryParams}\">Se connecter via Oauth Server</a><br/>";
 
-    $queryParams = http_build_query(
-        [
-            "client_id" => "418310210187577",
-            "redirect_uri" => "http://localhost:8081/fb_callback",
-            "response_type" => "code",
-            "scope" => "public_profile,email",
-            "state" => bin2hex(random_bytes(16))
-        ]
-    );
-    echo "<a href=\"https://www.facebook.com/v2.10/dialog/oauth?{$queryParams}\">Se connecter via Facebook</a><br/>";
+    $queryParams= http_build_query(array(
+        "client_id" => "418310210187577",
+        "redirect_uri" => "http://localhost:8081/fb_callback",
+        "response_type" => "code",
+        "scope" => "public_profile,email",
+        "state" => bin2hex(random_bytes(16))
+    ));
+    echo "<a href=\"https://www.facebook.com/v2.10/dialog/oauth?{$queryParams}\">Se connecter via Facebook</a>";
 
+    $queryParams= http_build_query(array(
+        "client_id" => "163659216436-lcj7h65gqut854e0oai5ktjn7bbbefk3.apps.googleusercontent.com",
+        "redirect_uri" => "http://localhost:8081/google_callback",
+        "response_type" => "code",
+        "scope" => "profile email openid",
+        "state" => bin2hex(random_bytes(16))
+    ));
+
+    echo "<a href=\"https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?{$queryParams}\">Se connecter via Google</a>";
     $queryParams = http_build_query(
         [
             "client_id" => "e52e6e751ff54609c25e",
@@ -134,6 +141,59 @@ function fbcallback()
     echo "Hello {$result['name']}";
 }
 
+
+function googlecallback()
+{
+
+    $specifParams = [
+            "grant_type" => "authorization_code",
+            "code" => $_GET["code"],
+        ];
+    $clientId = "163659216436-lcj7h65gqut854e0oai5ktjn7bbbefk3.apps.googleusercontent.com";
+    $clientSecret = "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";
+    $redirectUri = "http://localhost:8081/google_callback";
+    $data = http_build_query(array_merge([
+        "redirect_uri" => $redirectUri,
+        "client_id" => $clientId,
+        "client_secret" => $clientSecret,
+    ], $specifParams));
+
+    $url = "https://oauth2.googleapis.com/token";
+    $options = array(
+        'http' => array(
+            'header' => [
+                "Content-Type: application/x-www-form-urlencoded",
+                "Accept: application/json"
+            ],
+            'method' => 'POST',
+            'content' => $data
+
+        )
+    );
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $result = json_decode($result, true);
+    $accessToken = $result['access_token'];
+    $url = "https://openidconnect.googleapis.com/v1/userinfo";
+    $options = array(
+        'http' => array(
+            'method' => 'GET',
+            'header' => [
+                'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1',
+                'Authorization: Bearer ' . $accessToken
+            ]
+        )
+    );
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+
+
+    $result = json_decode($result, true);
+    echo "Hello {$result['name']}";
+
+}
+
 function ghcallback()
 {
     $specifParams = [
@@ -158,17 +218,17 @@ function ghcallback()
     $options = [
         'http' => [
             'header' => [
-                    "Content-Type: application/x-www-form-urlencoded",
-                    "Accept: application/json"
-                ],
+                "Content-Type: application/x-www-form-urlencoded",
+                "Accept: application/json"
+            ],
             'method' => 'POST',
             'content' => $data
         ]
     ];
-    $context  = stream_context_create($options);
+    $context = stream_context_create($options);
     $result = file_get_contents($url, false, $context);
     $result = json_decode($result, true);
-    
+
     $accessToken = $result['access_token'];
     $url = "https://api.github.com/user";
     $options = array(
@@ -185,7 +245,6 @@ function ghcallback()
     $result = json_decode($result, true);
     echo "Hello {$result['login']}";
 }
-
 $route = $_SERVER['REQUEST_URI'];
 switch (strtok($route, "?")) {
     case '/login':
@@ -196,6 +255,9 @@ switch (strtok($route, "?")) {
         break;
     case '/fb_callback':
         fbcallback();
+        break;
+    case '/google_callback':
+        googlecallback();
         break;
     case '/gh_callback':
         ghcallback();
