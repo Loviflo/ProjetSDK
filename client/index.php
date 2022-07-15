@@ -25,6 +25,15 @@ function login()
         "state" => bin2hex(random_bytes(16))
     ));
     echo "<a href=\"https://www.facebook.com/v2.10/dialog/oauth?{$queryParams}\">Se connecter via Facebook</a>";
+
+    $queryParams= http_build_query(array(
+        "client_id" => "163659216436-lcj7h65gqut854e0oai5ktjn7bbbefk3.apps.googleusercontent.com",
+        "redirect_uri" => "http://localhost:8081/google_callback",
+        "response_type" => "code",
+        "scope" => "profile email openid",
+        "state" => bin2hex(random_bytes(16))
+    ));
+    echo "<a href=\"https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?{$queryParams}\">Se connecter via Google</a>";
 }
 
 function callback()
@@ -99,6 +108,38 @@ function fbcallback()
     echo "Hello {$result['name']}";
 }
 
+function googlecallback()
+{
+
+    $specifParams = [
+            "grant_type" => "authorization_code",
+            "code" => $_GET["code"],
+        ];
+    $clientId = "163659216436-lcj7h65gqut854e0oai5ktjn7bbbefk3.apps.googleusercontent.com";
+    $clientSecret = "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";
+    $redirectUri = "http://localhost:8081/google_callback";
+    $data = http_build_query(array_merge([
+        "redirect_uri" => $redirectUri,
+        "client_id" => $clientId,
+        "client_secret" => $clientSecret
+    ], $specifParams));
+    //die(var_dump($data));
+    $url = "https://oauth2.googleapis.com/token";
+    $options = array(
+        'http' => array(
+            'method' => 'POST',
+            'header' => 'Content-Type: application/x-www-form-urlencoded',
+            'content' => $data
+        )
+    );
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+
+    $result = json_decode($result, true);
+
+    echo "Hello {$result['name']}";
+}
+
 $route = $_SERVER['REQUEST_URI'];
 switch (strtok($route, "?")) {
     case '/login':
@@ -109,6 +150,9 @@ switch (strtok($route, "?")) {
         break;
     case '/fb_callback':
         fbcallback();
+        break;
+    case '/google_callback':
+        googlecallback();
         break;
     default:
         echo '404';
