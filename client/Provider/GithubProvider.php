@@ -6,15 +6,15 @@ use App\Interface\ProviderInterface;
 
 class GithubProvider implements ProviderInterface
 {
-    function callback(): void
+    function callback(object $provider): void
     {
         $specifParams = [
             'grant_type' => 'authorization_code',
             'code' => $_GET['code'],
         ];
-        $clientId = 'e52e6e751ff54609c25e';
-        $clientSecret = '8e87980eef1886b3f983b1df153232b2fda75b2e';
-        $redirectUri = "http://localhost:8081/gh_callback";
+        $clientId = $provider->client_id;
+        $clientSecret = $provider->client_secret;
+        $redirectUri = $provider->redirect_uri;
         $data = http_build_query(
             array_merge(
                 [
@@ -26,7 +26,7 @@ class GithubProvider implements ProviderInterface
             )
         );
 
-        $url = "https://github.com/login/oauth/access_token";
+        $url = $provider->access_token_url;
         $options = [
             'http' => [
                 'header' => [
@@ -42,7 +42,7 @@ class GithubProvider implements ProviderInterface
         $result = json_decode($result, true);
 
         $accessToken = $result['access_token'];
-        $url = "https://api.github.com/user";
+        $url = $provider->user_info_url;
         $options = array(
             'http' => array(
                 'method' => 'GET',

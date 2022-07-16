@@ -6,7 +6,7 @@ use App\Interface\ProviderInterface;
 
 class OwnProvider implements ProviderInterface
 {
-    function callback(): void
+    function callback(object $provider): void
     {
         if ($_SERVER["REQUEST_METHOD"] === 'POST') {
             $specifParams = [
@@ -20,20 +20,20 @@ class OwnProvider implements ProviderInterface
                 "code" => $_GET["code"],
             ];
         }
-        $clientId = "621e3b8d1f964";
-        $clientSecret = "621e3b8d1f966";
-        $redirectUri = "http://localhost:8081/callback";
+        $clientId = $provider->client_id;
+        $clientSecret = $provider->client_secret;
+        $redirectUri = $provider->redirect_uri;
         $data = http_build_query(array_merge([
             "redirect_uri" => $redirectUri,
             "client_id" => $clientId,
             "client_secret" => $clientSecret
         ], $specifParams));
-        $url = "http://oauth-server:8080/token?{$data}";
+        $url = $provider->access_token_url . "?{$data}";
         $result = file_get_contents($url);
         $result = json_decode($result, true);
         $accessToken = $result['access_token'];
 
-        $url = "http://oauth-server:8080/me";
+        $url = $provider->user_info_url;
         $options = array(
             'http' => array(
                 'method' => 'GET',

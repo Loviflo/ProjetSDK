@@ -6,23 +6,22 @@ use App\Interface\ProviderInterface;
 
 class GoogleProvider implements ProviderInterface
 {
-    function callback(): void
+    function callback(object $provider): void
     {
-    
         $specifParams = [
                 "grant_type" => "authorization_code",
                 "code" => $_GET["code"],
             ];
-        $clientId = "163659216436-lcj7h65gqut854e0oai5ktjn7bbbefk3.apps.googleusercontent.com";
-        $clientSecret = "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";
-        $redirectUri = "http://localhost:8081/google_callback";
+        $clientId = $provider->client_id;
+        $clientSecret = $provider->client_secret;
+        $redirectUri = $provider->redirect_uri;
         $data = http_build_query(array_merge([
             "redirect_uri" => $redirectUri,
             "client_id" => $clientId,
             "client_secret" => $clientSecret,
         ], $specifParams));
     
-        $url = "https://oauth2.googleapis.com/token";
+        $url = $provider->access_token_url;
         $options = array(
             'http' => array(
                 'header' => [
@@ -39,7 +38,7 @@ class GoogleProvider implements ProviderInterface
         $result = file_get_contents($url, false, $context);
         $result = json_decode($result, true);
         $accessToken = $result['access_token'];
-        $url = "https://openidconnect.googleapis.com/v1/userinfo";
+        $url = $provider->user_info_url;
         $options = array(
             'http' => array(
                 'method' => 'GET',
