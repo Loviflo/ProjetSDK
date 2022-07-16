@@ -6,26 +6,26 @@ use App\Interface\ProviderInterface;
 
 class FacebookProvider implements ProviderInterface
 {
-    function callback(): void
+    function callback(object $provider): void
     {
         $specifParams = [
             "grant_type" => "authorization_code",
             "code" => $_GET["code"],
         ];
-        $clientId = "418310210187577";
-        $clientSecret = "82fef5a7f59581e542463e68888bb9f1";
-        $redirectUri = "http://localhost:8081/fb_callback";
+        $clientId = $provider->client_id;
+        $clientSecret = $provider->client_secret;
+        $redirectUri = $provider->redirect_uri;
         $data = http_build_query(array_merge([
             "redirect_uri" => $redirectUri,
             "client_id" => $clientId,
             "client_secret" => $clientSecret
         ], $specifParams));
-        $url = "https://graph.facebook.com/v2.10/oauth/access_token?{$data}";
+        $url = $provider->access_token_url . "?{$data}";
         $result = file_get_contents($url);
         $result = json_decode($result, true);
         $accessToken = $result['access_token'];
 
-        $url = "https://graph.facebook.com/v2.10/me";
+        $url = $provider->user_info_url;
         $options = array(
             'http' => array(
                 'method' => 'GET',
