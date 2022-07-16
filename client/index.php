@@ -42,6 +42,9 @@ switch (strtok($route, "?")) {
     case '/gh_callback':
         (new ProviderFacade('github'));
         break;
+    case '/discord_callback':
+        (new ProviderFacade('discord'));
+        break;
     default:
         (new ErrorController)->Error404();
 }
